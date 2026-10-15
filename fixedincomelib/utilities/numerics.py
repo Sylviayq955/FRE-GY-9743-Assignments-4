@@ -108,21 +108,31 @@ class Interpolator1DPCP(Interpolator1D):
         assert self.extrap_method_ == ExtrapMethod.FLAT
 
     def interpolate(self, x: float) -> float:
-        #TODO
-        pass
+        idx = int(np.searchsorted(self.axis1_, x, side="left"))
+        idx = min(idx, self.length_ - 1)
+        return float(self.values_[idx])
 
     def integrate(self, start_x: float, end_x: float) -> float:
-        #TODO
-        pass
+        if end_x < start_x:
+            return -self.integrate(end_x, start_x)
+        lo = np.concatenate(([-np.inf], self.axis1_[:-1]))   # segment left edges
+        hi = np.concatenate((self.axis1_[:-1], [np.inf]))    # segment right edges
+        overlap = np.maximum(np.minimum(hi, end_x) - np.maximum(lo, start_x), 0.0)
+        return float(np.dot(overlap, self.values_))
 
     def gradient_wrt_ordinate(self, x: float) -> np.ndarray:
-        #TODO
-        pass
+        idx = int(np.searchsorted(self.axis1_, x, side="left"))
+        idx = min(idx, self.length_ - 1)
+        grad = np.zeros(self.length_)
+        grad[idx] = 1.0
+        return grad
 
     def gradient_of_integrated_value_wrt_ordinate(self, start_x: float, end_x: float) -> np.ndarray:
-        #TODO
-        pass
-
+        if end_x < start_x:
+            return -self.gradient_of_integrated_value_wrt_ordinate(end_x, start_x)
+        lo = np.concatenate(([-np.inf], self.axis1_[:-1]))
+        hi = np.concatenate((self.axis1_[:-1], [np.inf]))
+        return np.maximum(np.minimum(hi, end_x) - np.maximum(lo, start_x), 0.0)
 
 
 class InterpolatorFactory:
